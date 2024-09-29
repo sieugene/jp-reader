@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  mokuro-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./projects/uploads:/app/uploads
