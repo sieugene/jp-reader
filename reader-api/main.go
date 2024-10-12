@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +11,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"github.com/sieugene/jp-reader/handlers"
+	"github.com/sieugene/jp-reader/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -17,6 +22,17 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	portString := os.Getenv("PORT")
+	dbUrl := os.Getenv("DB_URL")
+
+	pool, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	db := database.New(pool)
+	apiCfq := handlers.ApiConfig{
+		DB: db,
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -25,6 +41,9 @@ func main() {
 	v1Router := chi.NewRouter()
 	v1Router.Get("/healthz", handlers.HandlerReadiness)
 	v1Router.Post("/upload", handlers.UploadHandler)
+
+	v1Router.Get("/projects", apiCfq.HandlerGetProjects)
+	v1Router.Post("/projects", apiCfq.HandlerCreateProjects)
 
 	router.Mount("/v1", v1Router)
 
