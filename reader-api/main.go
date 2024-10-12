@@ -1,12 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -51,34 +52,70 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Write(dat)
 }
 
+type UploadResponse struct {
+	Message string `json:"message"`
+}
+
 func uploadFile(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("File Upload Endpoint Hit")
 
 	r.ParseMultipartForm(10 << 20)
 
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		fmt.Println("Error Retrieving the File")
-		fmt.Println(err)
+	files := r.MultipartForm.File["file"]
+	if len(files) == 0 {
+		http.Error(w, "No files uploaded", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
-	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-	fmt.Printf("File Size: %+v\n", handler.Size)
-	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
-	tempFile, err := os.CreateTemp("temp-images", "upload-*.jpg")
-	if err != nil {
-		fmt.Println(err)
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	for _, handler := range files {
+		file, err := handler.Open()
+		if err != nil {
+			http.Error(w, "Error retrieving file", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		part, err := writer.CreateFormFile("file", handler.Filename)
+		if err != nil {
+			fmt.Println("Error creating form file:", err)
+			return
+		}
+
+		if _, err = io.Copy(part, file); err != nil {
+			fmt.Println("Error copying file:", err)
+			return
+		}
+
 	}
-	defer tempFile.Close()
 
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		fmt.Println(err)
+	if err := writer.Close(); err != nil {
+		fmt.Println("Error closing writer:", err)
+		return
 	}
 
-	tempFile.Write(fileBytes)
+	req, err := http.NewRequest("POST", "http://127.0.0.1:5001/upload/test", &buf)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	fmt.Fprintf(w, "Successfully Uploaded File\n")
+	// Make request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending files:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var uploadResp UploadResponse
+	if err := json.NewDecoder(resp.Body).Decode(&uploadResp); err != nil {
+		fmt.Println("Error decoding response:", err)
+		return
+	}
+
+	w.Write([]byte(uploadResp.Message))
 }
