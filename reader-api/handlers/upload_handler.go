@@ -1,21 +1,24 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"os"
+
+	"github.com/google/uuid"
+	"github.com/sieugene/jp-reader/internal/database"
+	"github.com/sieugene/jp-reader/queue"
 )
 
 type UploadResponse struct {
 	Message string `json:"message"`
 }
 
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
+type SendToQueueFunc func(task queue.UploadQueue) error
 
+func (apiConfig *ApiConfig) UploadHandler(w http.ResponseWriter, r *http.Request, sendToQueue SendToQueueFunc) {
 	r.ParseMultipartForm(10 << 20)
 
 	paramTitle := r.FormValue("title")
@@ -30,8 +33,11 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var buf bytes.Buffer
-	writer := multipart.NewWriter(&buf)
+	folderPath := fmt.Sprintf("temps/%s/", paramTitle)
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		http.Error(w, "Error creating upload folder", http.StatusInternalServerError)
+		return
+	}
 
 	for _, handler := range files {
 		file, err := handler.Open()
@@ -41,46 +47,40 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		part, err := writer.CreateFormFile("file", handler.Filename)
+		outFile, err := os.Create(folderPath + handler.Filename)
 		if err != nil {
-			fmt.Println("Error creating form file:", err)
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
 			return
 		}
+		defer outFile.Close()
 
-		if _, err = io.Copy(part, file); err != nil {
-			fmt.Println("Error copying file:", err)
+		if _, err = io.Copy(outFile, file); err != nil {
+			http.Error(w, "Error copying file", http.StatusInternalServerError)
 			return
 		}
-
 	}
 
-	if err := writer.Close(); err != nil {
-		fmt.Println("Error closing writer:", err)
-		return
-	}
-
-	requestEndpoint := os.Getenv("MOKURO_SERVICE") + "/upload/" + paramTitle
-	req, err := http.NewRequest("POST", requestEndpoint, &buf)
+	dbWaitingTask, err := apiConfig.DB.CreateTask(context.Background(), database.CreateTaskParams{
+		ID:     uuid.New(),
+		Title:  paramTitle,
+		Status: "waiting",
+	})
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		http.Error(w, "Error creating task record", http.StatusInternalServerError)
 		return
 	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	// Make request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	task := queue.UploadQueue{
+		ID:     dbWaitingTask.ID,
+		Title:  paramTitle,
+		Folder: folderPath,
+	}
+
+	err = sendToQueue(task)
 	if err != nil {
-		fmt.Println("Error sending files:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	var uploadResp UploadResponse
-	if err := json.NewDecoder(resp.Body).Decode(&uploadResp); err != nil {
-		fmt.Println("Error decoding response:", err)
+		http.Error(w, "Error sending task to queue", http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte(uploadResp.Message))
+	w.Write([]byte("Task has been queued"))
 }

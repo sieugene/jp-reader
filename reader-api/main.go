@@ -9,12 +9,20 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/sieugene/jp-reader/handlers"
 	"github.com/sieugene/jp-reader/internal/database"
+	"github.com/sieugene/jp-reader/rabbitmq"
 
 	_ "github.com/lib/pq"
 )
+
+type RabbitTask struct {
+	ID       uuid.UUID `json:"id"`
+	Title    string    `json:"title"`
+	FileData []byte    `json:"file_data"`
+}
 
 func main() {
 	err := godotenv.Load()
@@ -34,13 +42,22 @@ func main() {
 		DB: db,
 	}
 
+	rabbitConfig := rabbitmq.RabbitMQConfig{
+		User:     os.Getenv("RABBITMQ_USER"),
+		Password: os.Getenv("RABBITMQ_PASSWORD"),
+		Host:     os.Getenv("RABBITMQ_HOST"),
+		Port:     os.Getenv("RABBITMQ_PORT"),
+	}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	router := chi.NewRouter()
 
 	v1Router := chi.NewRouter()
 	v1Router.Get("/healthz", handlers.HandlerReadiness)
-	v1Router.Post("/upload", handlers.UploadHandler)
+	v1Router.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
+		apiCfq.UploadHandler(w, r, rabbitmq.CreateCbSendToQueue(rabbitConfig))
+	})
 
 	v1Router.Get("/projects", apiCfq.HandlerGetProjects)
 	v1Router.Post("/projects", apiCfq.HandlerCreateProjects)
@@ -51,6 +68,8 @@ func main() {
 		Handler: router,
 		Addr:    ":" + portString,
 	}
+
+	go rabbitmq.ConsumeQueue(apiCfq, rabbitConfig)
 
 	log.Printf("Server starting on port %v", portString)
 	err = srv.ListenAndServe()

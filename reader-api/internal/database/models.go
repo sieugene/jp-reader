@@ -17,3 +17,11 @@ type Project struct {
 	Name      string
 	Link      string
 }
+
+type Task struct {
+	ID        uuid.UUID
+	Title     string
+	Status    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
