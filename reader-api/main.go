@@ -56,7 +56,7 @@ func main() {
 	v1Router := chi.NewRouter()
 	v1Router.Get("/healthz", handlers.HandlerReadiness)
 	v1Router.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
-		apiCfq.UploadHandler(w, r, rabbitmq.CreateCbSendToQueue(rabbitConfig))
+		apiCfq.UploadHandler(w, r, rabbitmq.MokuroUploadTask(rabbitConfig))
 	})
 
 	v1Router.Get("/projects", apiCfq.HandlerGetProjects)
@@ -69,7 +69,7 @@ func main() {
 		Addr:    ":" + portString,
 	}
 
-	go rabbitmq.ConsumeQueue(apiCfq, rabbitConfig)
+	go rabbitmq.MokuroUploadConsume(apiCfq, rabbitConfig)
 
 	log.Printf("Server starting on port %v", portString)
 	err = srv.ListenAndServe()

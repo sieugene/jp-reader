@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sieugene/jp-reader/internal/database"
@@ -61,9 +62,11 @@ func (apiConfig *ApiConfig) UploadHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	dbWaitingTask, err := apiConfig.DB.CreateTask(context.Background(), database.CreateTaskParams{
-		ID:     uuid.New(),
-		Title:  paramTitle,
-		Status: "waiting",
+		ID:        uuid.New(),
+		Title:     paramTitle,
+		Status:    "waiting",
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		http.Error(w, "Error creating task record", http.StatusInternalServerError)

@@ -7,3 +7,5 @@ type UploadQueue struct {
 	Title  string    `json:"title"`
 	Folder string    `json:"folder"`
 }
+
+const UPLOAD_QUEUE_KEY = "upload_queue"
