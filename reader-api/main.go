@@ -1,3 +1,9 @@
+// @title JP Reader API
+// @version 1.0
+// @description API for JP Reader application.
+// @host localhost:3000
+// @BasePath /v1
+
 package main
 
 import (
@@ -14,8 +20,10 @@ import (
 	"github.com/sieugene/jp-reader/handlers"
 	"github.com/sieugene/jp-reader/internal/database"
 	"github.com/sieugene/jp-reader/rabbitmq"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	_ "github.com/lib/pq"
+	_ "github.com/sieugene/jp-reader/docs"
 )
 
 type RabbitTask struct {
@@ -63,6 +71,7 @@ func main() {
 	v1Router.Post("/projects", apiCfq.HandlerCreateProjects)
 
 	router.Mount("/v1", v1Router)
+	router.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	srv := &http.Server{
 		Handler: router,

@@ -1,0 +1,24 @@
+basePath: /v1
+host: localhost:3000
+info:
+  contact: {}
+  description: API for JP Reader application.
+  title: JP Reader API
+  version: "1.0"
+paths:
+  /healthz:
+    get:
+      consumes:
+      - application/json
+      description: Returns 200 if the server is ready
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Checks if the server is ready
+      tags:
+      - health
+swagger: "2.0"

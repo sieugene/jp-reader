@@ -6,6 +6,14 @@ import (
 	"net/http"
 )
 
+// HandlerReadiness checks server readiness
+// @Summary Checks if the server is ready
+// @Description Returns 200 if the server is ready
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {string} string “ok”
+// @Router /healthz [get]
 func HandlerReadiness(w http.ResponseWriter, r *http.Request) {
 	dat, err := json.Marshal(struct{}{})
 	if err != nil {
