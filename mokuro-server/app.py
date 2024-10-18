@@ -1,11 +1,14 @@
 import os
-import re
+import json
 import uuid
 import subprocess
 import shutil
 from flask import Flask, abort, request, jsonify, send_from_directory
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)
 
 BASE_UPLOAD_FOLDER = 'projects/uploads'
 
@@ -27,12 +30,12 @@ def upload_file(title):
         return jsonify({"error": "No selected files"}), 400
 
     file_paths = []
-    for file in files:
+    for index, file in enumerate(files, start=1):
         if file.filename == '':
             return jsonify({"error": "One or more files have no selected filename"}), 400
 
         file_extension = os.path.splitext(file.filename)[1]
-        new_filename = f"{uuid.uuid4()}{file_extension}"
+        new_filename = f"{index}_{uuid.uuid4()}{file_extension}"
         file_path = os.path.join(upload_folder, new_filename)
         file.save(file_path)
         file_paths.append(file_path)
@@ -51,10 +54,8 @@ def get_projects():
     for name in os.listdir(BASE_UPLOAD_FOLDER):
         project_path = os.path.join(BASE_UPLOAD_FOLDER, name)
         if os.path.isdir(project_path):
-
             html_path = os.path.join(project_path, 'images.html')
             if os.path.exists(html_path):
-
                 projects.append({
                     'name': name,
                     'link': f'/projects/{name}'
@@ -62,29 +63,30 @@ def get_projects():
 
     return jsonify({'projects': projects})
 
-
-def fix_image_paths(html_content, project_name):
-    pattern = r'background-image:url\(&quot;images/([^)]+)&quot;\)'
-    fixed_html = re.sub(pattern, f'background-image:url(&quot;/projects/{project_name}/images/\\1&quot;)', html_content)
-    return fixed_html
-
-# Serve html
 @app.route('/projects/<string:project_name>', methods=['GET'])
-def serve_html(project_name):
-    project_folder = os.path.join(BASE_UPLOAD_FOLDER, project_name)
-    html_path = os.path.join(project_folder, 'images.html')
+def get_project_content(project_name):
+    images_folder = os.path.join(BASE_UPLOAD_FOLDER, project_name, 'images')
+    ocr_folder = os.path.join(BASE_UPLOAD_FOLDER, project_name, '_ocr', 'images')
 
-    if not os.path.exists(html_path):
-        abort(404)
+    images = [f for f in os.listdir(images_folder) if os.path.isfile(os.path.join(images_folder, f))]
+    image_links = [f'/projects/{project_name}/images/{image}' for image in images]
 
-    with open(html_path, 'r', encoding='utf-8') as f:
-        html_content = f.read()
+    ocr_data = []
+    for filename in os.listdir(ocr_folder):
+        if filename.endswith('.json'):
+            file_path = os.path.join(ocr_folder, filename)
+            with open(file_path, 'r', encoding='utf-8') as json_file:
+                json_content = json.load(json_file)
+                ocr_data.append({
+                    'data': json_content,
+                    'name': filename
+                })
 
-    fixed_html_content = fix_image_paths(html_content, project_name)
+    return jsonify({
+        'images': image_links,
+        'ocrData': ocr_data
+    }), 200
 
-    return fixed_html_content
-
-# Serve html
 @app.route('/projects/<string:project_name>/images/<path:filename>', methods=['GET'])
 def serve_image(project_name, filename):
     images_folder = os.path.join(BASE_UPLOAD_FOLDER, project_name, 'images')
@@ -103,7 +105,6 @@ def delete_project(project_name):
     shutil.rmtree(project_folder)
 
     return jsonify({"message": f"Project '{project_name}' deleted successfully."}), 200
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
