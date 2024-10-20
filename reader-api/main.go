@@ -20,6 +20,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sieugene/jp-reader/handlers"
 	"github.com/sieugene/jp-reader/internal/database"
+	"github.com/sieugene/jp-reader/pools"
 	"github.com/sieugene/jp-reader/rabbitmq"
 	httpSwagger "github.com/swaggo/http-swagger"
 
@@ -78,7 +79,6 @@ func main() {
 	})
 
 	v1Router.Get("/projects", apiCfq.HandlerGetProjects)
-	v1Router.Post("/projects", apiCfq.HandlerCreateProjects)
 
 	router.Mount("/v1", v1Router)
 	router.Get("/swagger/*", httpSwagger.WrapHandler)
@@ -89,6 +89,7 @@ func main() {
 	}
 
 	go rabbitmq.MokuroUploadConsume(apiCfq, rabbitConfig)
+	go pools.StartPollingProjects(apiCfq)
 
 	log.Printf("Server starting on port %v", portString)
 	err = srv.ListenAndServe()

@@ -49,24 +49,43 @@ def upload_file(title):
 
 @app.route('/projects', methods=['GET'])
 def get_projects():
-    projects = []
-
-    for name in os.listdir(BASE_UPLOAD_FOLDER):
-        project_path = os.path.join(BASE_UPLOAD_FOLDER, name)
-        if os.path.isdir(project_path):
-            html_path = os.path.join(project_path, 'images.html')
-            if os.path.exists(html_path):
-                projects.append({
-                    'name': name,
-                    'link': f'/projects/{name}'
-                })
-
-    return jsonify({'projects': projects})
+    projects = get_projects_data()
+    return jsonify({'projects': projects}), 200
 
 @app.route('/projects/<string:project_name>', methods=['GET'])
 def get_project_content(project_name):
-    images_folder = os.path.join(BASE_UPLOAD_FOLDER, project_name, 'images')
-    ocr_folder = os.path.join(BASE_UPLOAD_FOLDER, project_name, '_ocr', 'images')
+    project_data = get_projects_data(project_name)
+    if not project_data:
+        return jsonify({'error': 'Project not found'}), 404
+
+    return jsonify(project_data), 200
+
+def get_projects_data(project_name=None):
+    projects = []
+    base_path = BASE_UPLOAD_FOLDER
+
+    if project_name is None:
+        for name in os.listdir(base_path):
+            project_data = fetch_project_data(name)
+            if project_data:
+                projects.append(project_data)
+        return projects
+
+    project_data = fetch_project_data(project_name)
+    return project_data if project_data else None
+
+
+def fetch_project_data(project_name):
+    project_path = os.path.join(BASE_UPLOAD_FOLDER, project_name)
+    if not os.path.isdir(project_path):
+        return None
+
+    html_path = os.path.join(project_path, 'images.html')
+    if not os.path.exists(html_path):
+        return None
+
+    images_folder = os.path.join(project_path, 'images')
+    ocr_folder = os.path.join(project_path, '_ocr', 'images')
 
     images = [f for f in os.listdir(images_folder) if os.path.isfile(os.path.join(images_folder, f))]
     image_links = [f'/projects/{project_name}/images/{image}' for image in images]
@@ -82,10 +101,12 @@ def get_project_content(project_name):
                     'name': filename
                 })
 
-    return jsonify({
+    return {
+        'name': project_name,
         'images': image_links,
         'ocrData': ocr_data
-    }), 200
+    }
+
 
 @app.route('/projects/<string:project_name>/images/<path:filename>', methods=['GET'])
 def serve_image(project_name, filename):

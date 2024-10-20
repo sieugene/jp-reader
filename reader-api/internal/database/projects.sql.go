@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO projects (id, created_at, update_at, name, link)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, created_at, update_at, name, link
+INSERT INTO projects (id, created_at, update_at, name, images, ocrData)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, created_at, update_at, name, images, ocrdata
 `
 
 type CreateProjectParams struct {
@@ -23,7 +25,8 @@ type CreateProjectParams struct {
 	CreatedAt time.Time
 	UpdateAt  time.Time
 	Name      string
-	Link      string
+	Images    []string
+	Ocrdata   pqtype.NullRawMessage
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
@@ -32,7 +35,8 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		arg.CreatedAt,
 		arg.UpdateAt,
 		arg.Name,
-		arg.Link,
+		pq.Array(arg.Images),
+		arg.Ocrdata,
 	)
 	var i Project
 	err := row.Scan(
@@ -40,13 +44,23 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.CreatedAt,
 		&i.UpdateAt,
 		&i.Name,
-		&i.Link,
+		pq.Array(&i.Images),
+		&i.Ocrdata,
 	)
 	return i, err
 }
 
+const deleteProjectByName = `-- name: DeleteProjectByName :exec
+DELETE FROM projects WHERE name = $1
+`
+
+func (q *Queries) DeleteProjectByName(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteProjectByName, name)
+	return err
+}
+
 const getProjects = `-- name: GetProjects :many
-SELECT id, created_at, update_at, name, link FROM projects
+SELECT id, created_at, update_at, name, images, ocrdata FROM projects
 `
 
 func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
@@ -63,7 +77,8 @@ func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
 			&i.CreatedAt,
 			&i.UpdateAt,
 			&i.Name,
-			&i.Link,
+			pq.Array(&i.Images),
+			&i.Ocrdata,
 		); err != nil {
 			return nil, err
 		}

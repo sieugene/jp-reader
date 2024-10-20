@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 type Project struct {
@@ -15,7 +16,8 @@ type Project struct {
 	CreatedAt time.Time
 	UpdateAt  time.Time
 	Name      string
-	Link      string
+	Images    []string
+	Ocrdata   pqtype.NullRawMessage
 }
 
 type Task struct {
