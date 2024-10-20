@@ -1,4 +1,22 @@
 basePath: /v1
+definitions:
+  handlers.Project:
+    description: Represents a project with its details.
+    properties:
+      ID:
+        type: string
+      Images:
+        items:
+          type: string
+        type: array
+      Name:
+        type: string
+      OcrData: {}
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+    type: object
 host: localhost:3000
 info:
   contact: {}
@@ -21,4 +39,25 @@ paths:
       summary: Checks if the server is ready
       tags:
       - health
+  /projects:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all projects from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.Project'
+            type: array
+        "400":
+          description: 'Couldn''t get projects: [error message]'
+          schema:
+            type: string
+      summary: Get list of projects
+      tags:
+      - projects
 swagger: "2.0"

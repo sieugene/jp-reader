@@ -9,6 +9,16 @@
  * ---------------------------------------------------------------
  */
 
+/** Represents a project with its details. */
+export interface HandlersProject {
+  ID?: string;
+  Images?: string[];
+  Name?: string;
+  OcrData?: any;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -239,6 +249,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     healthzList: (params: RequestParams = {}) =>
       this.request<string, any>({
         path: `/healthz`,
+        method: "GET",
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  projects = {
+    /**
+     * @description Retrieves all projects from the database
+     *
+     * @tags projects
+     * @name ProjectsList
+     * @summary Get list of projects
+     * @request GET:/projects
+     */
+    projectsList: (params: RequestParams = {}) =>
+      this.request<HandlersProject[], string>({
+        path: `/projects`,
         method: "GET",
         type: ContentType.Json,
         format: "json",

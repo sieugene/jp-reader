@@ -1,12 +1,10 @@
-import { OcrData } from "@/shared/services/mokuro";
+import { FormattedProject } from "@/hooks/useProjects";
 import { FC } from "react";
 
 type Props = {
-  imageSrc: string;
-  data: OcrData;
   scaleX?: number;
   scaleY?: number;
-};
+} & FormattedProject;
 export const Reader: FC<Props> = ({
   imageSrc,
   scaleX = 1,

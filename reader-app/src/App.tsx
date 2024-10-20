@@ -1,35 +1,20 @@
 import { useHealthz } from "@/hooks/useHealthz";
-import { useEffect, useState } from "react";
-import {
-  GetProjectsResponse,
-  OcrData,
-  useMokuroApi,
-} from "./shared/services/mokuro";
+import { FormattedProject, useProjects } from "@/hooks/useProjects";
+import { useState } from "react";
 import { Reader } from "./features";
 
 function App() {
-  const [selectedProject, setSelectedProject] = useState<
-    | {
-        imageSrc: string;
-        data: OcrData;
-      }[]
-    | null
-  >(null);
-  const [projects, setProjects] = useState<GetProjectsResponse["projects"]>([]);
   useHealthz();
-  const api = useMokuroApi();
+  const [selectedProject, setSelectedProject] = useState<
+    FormattedProject[] | null
+  >(null);
+  const projects = useProjects();
 
-  useEffect(() => {
-    (async () => {
-      const response = await api.getProjects();
-      setProjects(response.projects);
-    })();
-  }, []);
-
-  const fetchProject = async (project: string) => {
-    const response = await api.getProject(project);
-
-    setSelectedProject(response);
+  const selectProject = async (projectId: string) => {
+    const project = projects.filter((project) => project.id === projectId);
+    if (project) {
+      setSelectedProject(project);
+    }
   };
 
   return (
@@ -46,18 +31,29 @@ function App() {
           <p
             style={{ fontWeight: "bold" }}
             onClick={() => {
-              fetchProject(project.name);
+              selectProject(project.id || "");
             }}
           >
-            {project.name}
+            {project.id}
           </p>
         </div>
       ))}
-      {selectedProject?.map((project, index) => {
-        return (
-          <Reader data={project.data} imageSrc={project.imageSrc} key={index} />
-        );
-      })}
+      {selectedProject ? (
+        <>
+          {selectedProject?.map((project, index) => {
+            return (
+              <Reader
+                data={project.data}
+                imageSrc={project.imageSrc}
+                id={project.id}
+                key={index}
+              />
+            );
+          })}
+        </>
+      ) : (
+        <h2> project not selected</h2>
+      )}
     </div>
   );
 }

@@ -1,16 +1,9 @@
-export type GetProjectsResponse = {
-  projects: {
-    link: string;
-    name: string;
-  }[];
-};
+import { HandlersProject } from "@/api/Api";
 
-export type GetProjectResponse = {
-  images: string[];
-  ocrData: {
-    data: OcrData;
-    name: string;
-  }[];
+export type ProjectResponse = {
+  data: (Omit<HandlersProject, "ocrData"> & {
+    ocrData: { data: OcrData; name: string }[];
+  })[];
 };
 
 export interface OcrData {

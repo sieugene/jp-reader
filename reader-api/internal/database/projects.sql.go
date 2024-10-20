@@ -7,17 +7,17 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/sqlc-dev/pqtype"
 )
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO projects (id, created_at, update_at, name, images, ocrData)
+INSERT INTO projects (id, created_at, update_at, name, images, ocr_data)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, created_at, update_at, name, images, ocrdata
+RETURNING id, created_at, update_at, name, images, ocr_data
 `
 
 type CreateProjectParams struct {
@@ -26,7 +26,7 @@ type CreateProjectParams struct {
 	UpdateAt  time.Time
 	Name      string
 	Images    []string
-	Ocrdata   pqtype.NullRawMessage
+	OcrData   json.RawMessage
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
@@ -36,7 +36,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		arg.UpdateAt,
 		arg.Name,
 		pq.Array(arg.Images),
-		arg.Ocrdata,
+		arg.OcrData,
 	)
 	var i Project
 	err := row.Scan(
@@ -45,7 +45,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.UpdateAt,
 		&i.Name,
 		pq.Array(&i.Images),
-		&i.Ocrdata,
+		&i.OcrData,
 	)
 	return i, err
 }
@@ -60,7 +60,7 @@ func (q *Queries) DeleteProjectByName(ctx context.Context, name string) error {
 }
 
 const getProjects = `-- name: GetProjects :many
-SELECT id, created_at, update_at, name, images, ocrdata FROM projects
+SELECT id, created_at, update_at, name, images, ocr_data FROM projects
 `
 
 func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
@@ -78,7 +78,7 @@ func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
 			&i.UpdateAt,
 			&i.Name,
 			pq.Array(&i.Images),
-			&i.Ocrdata,
+			&i.OcrData,
 		); err != nil {
 			return nil, err
 		}

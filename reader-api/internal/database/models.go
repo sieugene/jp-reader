@@ -5,10 +5,10 @@
 package database
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 type Project struct {
@@ -17,7 +17,7 @@ type Project struct {
 	UpdateAt  time.Time
 	Name      string
 	Images    []string
-	Ocrdata   pqtype.NullRawMessage
+	OcrData   json.RawMessage
 }
 
 type Task struct {

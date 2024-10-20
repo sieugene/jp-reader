@@ -13,13 +13,36 @@ import (
 	"github.com/google/uuid"
 	"github.com/sieugene/jp-reader/handlers"
 	"github.com/sieugene/jp-reader/internal/database"
-	"github.com/sqlc-dev/pqtype"
 )
 
-type ProjectData struct {
-	Name    string          `json:"name"`
-	Images  []string        `json:"images"`
-	OcrData json.RawMessage `json:"ocrData"`
+type Project struct {
+	Images  []string  `json:"images"`
+	Name    string    `json:"name"`
+	OcrData []OcrData `json:"ocrData"`
+}
+
+type OcrData struct {
+	Data OcrDataContent `json:"data"`
+	Name string         `json:"name"`
+}
+
+type OcrDataContent struct {
+	Blocks    []Block `json:"blocks"`
+	ImgHeight int     `json:"img_height"`
+	ImgWidth  int     `json:"img_width"`
+	Version   string  `json:"version"`
+}
+
+type Block struct {
+	Box         []float64     `json:"box"`
+	FontSize    int           `json:"font_size"`
+	Lines       []string      `json:"lines"`
+	LinesCoords [][][]float64 `json:"lines_coords"`
+	Vertical    bool          `json:"vertical"`
+}
+
+type Projects struct {
+	Projects []Project `json:"projects"`
 }
 
 func StartPollingProjects(apiCfq handlers.ApiConfig) {
@@ -55,9 +78,7 @@ func pollProjects(apiCfq handlers.ApiConfig) error {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var result struct {
-		Projects []ProjectData `json:"projects"`
-	}
+	var result = Projects{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		return fmt.Errorf("failed to parse projects JSON: %w", err)
 	}
@@ -78,7 +99,13 @@ func pollProjects(apiCfq handlers.ApiConfig) error {
 			continue
 		}
 
-		ocrData := pqtype.NullRawMessage{RawMessage: project.OcrData, Valid: true}
+		rawData, err := json.Marshal(project.OcrData)
+		if err != nil {
+			log.Printf("Failed to marshal OCR data for project %s: %v", project.Name, err)
+			return err
+		}
+
+		ocrData := json.RawMessage(rawData)
 
 		if _, err := apiCfq.DB.CreateProject(context.Background(), database.CreateProjectParams{
 			ID:        uuid.New(),
@@ -86,7 +113,7 @@ func pollProjects(apiCfq handlers.ApiConfig) error {
 			UpdateAt:  time.Now().UTC(),
 			Name:      project.Name,
 			Images:    project.Images,
-			Ocrdata:   ocrData,
+			OcrData:   ocrData,
 		}); err != nil {
 			log.Printf("Failed to create project %s: %v", project.Name, err)
 		}
