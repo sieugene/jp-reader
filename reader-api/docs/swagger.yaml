@@ -60,4 +60,40 @@ paths:
       summary: Get list of projects
       tags:
       - projects
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads multiple files, saves them to a directory, creates a task
+        record in the database, and sends the task to the queue
+      parameters:
+      - description: Title of the task
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Files to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Task has been queued
+          schema:
+            type: string
+        "400":
+          description: Title is required / No files uploaded / Error retrieving file
+          schema:
+            type: string
+        "500":
+          description: Error creating upload folder / Error saving file / Error copying
+            file / Error creating task record / Error sending task to queue
+          schema:
+            type: string
+      summary: Upload multiple files and queue task
+      tags:
+      - uploads
 swagger: "2.0"

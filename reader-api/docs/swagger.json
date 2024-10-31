@@ -63,6 +63,57 @@
                     }
                 }
             }
+        },
+        "/upload": {
+            "post": {
+                "description": "Uploads multiple files, saves them to a directory, creates a task record in the database, and sends the task to the queue",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "uploads"
+                ],
+                "summary": "Upload multiple files and queue task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Title of the task",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Files to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task has been queued",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Title is required / No files uploaded / Error retrieving file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating upload folder / Error saving file / Error copying file / Error creating task record / Error sending task to queue",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

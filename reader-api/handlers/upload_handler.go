@@ -19,6 +19,18 @@ type UploadResponse struct {
 
 type SendToQueueFunc func(task queue.UploadQueue) error
 
+// UploadHandler handles multiple file uploads and queues a task
+// @Summary Upload multiple files and queue task
+// @Description Uploads multiple files, saves them to a directory, creates a task record in the database, and sends the task to the queue
+// @Tags uploads
+// @Accept multipart/form-data
+// @Produce plain
+// @Param title formData string true "Title of the task"
+// @Param file formData file true "Files to upload"
+// @Success 200 {string} string "Task has been queued"
+// @Failure 400 {string} string "Title is required / No files uploaded / Error retrieving file"
+// @Failure 500 {string} string "Error creating upload folder / Error saving file / Error copying file / Error creating task record / Error sending task to queue"
+// @Router /upload [post]
 func (apiConfig *ApiConfig) UploadHandler(w http.ResponseWriter, r *http.Request, sendToQueue SendToQueueFunc) {
 	r.ParseMultipartForm(10 << 20)
 
