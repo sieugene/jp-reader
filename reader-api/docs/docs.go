@@ -70,6 +70,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/tasks": {
+            "get": {
+                "description": "Retrieves all tasks from the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get list of tasks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.Task"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Couldn't get tasks: [error message]",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/upload": {
             "post": {
                 "description": "Uploads multiple files, saves them to a directory, creates a task record in the database, and sends the task to the queue",
@@ -144,6 +176,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.Task": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "processing",
+                        "error",
+                        "completed",
+                        "waiting"
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }

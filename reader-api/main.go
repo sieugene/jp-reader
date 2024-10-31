@@ -78,7 +78,10 @@ func main() {
 		apiCfq.UploadHandler(w, r, rabbitmq.MokuroUploadTask(rabbitConfig))
 	})
 
+	// TODO Delete projects
 	v1Router.Get("/projects", apiCfq.HandlerGetProjects)
+
+	v1Router.Get("/tasks", apiCfq.HandlerGetTasks)
 
 	router.Mount("/v1", v1Router)
 	router.Get("/swagger/*", httpSwagger.WrapHandler)

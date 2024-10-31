@@ -17,6 +17,24 @@ definitions:
       updatedAt:
         type: string
     type: object
+  handlers.Task:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      status:
+        enum:
+        - processing
+        - error
+        - completed
+        - waiting
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
 host: localhost:3000
 info:
   contact: {}
@@ -60,6 +78,27 @@ paths:
       summary: Get list of projects
       tags:
       - projects
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all tasks from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.Task'
+            type: array
+        "400":
+          description: 'Couldn''t get tasks: [error message]'
+          schema:
+            type: string
+      summary: Get list of tasks
+      tags:
+      - tasks
   /upload:
     post:
       consumes:
