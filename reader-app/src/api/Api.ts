@@ -9,13 +9,29 @@
  * ---------------------------------------------------------------
  */
 
-/** Represents a project with its details. */
 export interface HandlersProject {
-  ID?: string;
-  Images?: string[];
-  Name?: string;
-  OcrData?: any;
   createdAt?: string;
+  id?: string;
+  images?: string[];
+  name?: string;
+  ocrData?: any;
+  updatedAt?: string;
+}
+
+export interface HandlersTask {
+  createdAt?: string;
+  id?: string;
+  status?: "processing" | "error" | "completed" | "waiting";
+  title?: string;
+  updatedAt?: string;
+}
+
+export interface HandlersTaskWithProject {
+  createdAt?: string;
+  id?: string;
+  project?: HandlersProject;
+  status?: "processing" | "error" | "completed" | "waiting";
+  title?: string;
   updatedAt?: string;
 }
 
@@ -260,16 +276,80 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @description Retrieves all projects from the database
      *
      * @tags projects
-     * @name ProjectsList
+     * @name GetProjects
      * @summary Get list of projects
-     * @request GET:/projects
+     * @request GET:/projects/all
      */
-    projectsList: (params: RequestParams = {}) =>
+    getProjects: (params: RequestParams = {}) =>
       this.request<HandlersProject[], string>({
-        path: `/projects`,
+        path: `/projects/all`,
         method: "GET",
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+  };
+  tasks = {
+    /**
+     * @description Retrieves all tasks from the database
+     *
+     * @tags tasks
+     * @name TasksList
+     * @summary Get list of tasks
+     * @request GET:/tasks
+     */
+    tasksList: (params: RequestParams = {}) =>
+      this.request<HandlersTask[], string>({
+        path: `/tasks`,
+        method: "GET",
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Retrieves all tasks along with their associated projects from the database.
+     *
+     * @tags tasks
+     * @name ProjectsList
+     * @summary Get list of tasks with projects
+     * @request GET:/tasks/projects
+     */
+    projectsList: (params: RequestParams = {}) =>
+      this.request<HandlersTaskWithProject[], string>({
+        path: `/tasks/projects`,
+        method: "GET",
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  upload = {
+    /**
+     * @description Uploads multiple files, saves them to a directory, creates a task record in the database, and sends the task to the queue
+     *
+     * @tags uploads
+     * @name UploadCreate
+     * @summary Upload multiple files and queue task
+     * @request POST:/upload
+     */
+    uploadCreate: (
+      data: {
+        /** Title of the task */
+        title: string;
+        /**
+         * Files to upload
+         * @format binary
+         */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<string, string>({
+        path: `/upload`,
+        method: "POST",
+        body: data,
+        type: ContentType.FormData,
         ...params,
       }),
   };

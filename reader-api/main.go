@@ -79,9 +79,10 @@ func main() {
 	})
 
 	// TODO Delete projects
-	v1Router.Get("/projects", apiCfq.HandlerGetProjects)
+	v1Router.Get("/projects/all", apiCfq.HandlerGetProjects)
 
 	v1Router.Get("/tasks", apiCfq.HandlerGetTasks)
+	v1Router.Get("/tasks/projects", apiCfq.HandlerGetTasksWithProjects)
 
 	router.Mount("/v1", v1Router)
 	router.Get("/swagger/*", httpSwagger.WrapHandler)

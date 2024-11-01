@@ -1,25 +1,24 @@
 basePath: /v1
 definitions:
   handlers.Project:
-    description: Represents a project with its details.
     properties:
-      ID:
+      createdAt:
         type: string
-      Images:
+      id:
+        type: string
+      images:
         items:
           type: string
         type: array
-      Name:
+      name:
         type: string
-      OcrData: {}
-      createdAt:
-        type: string
+      ocrData: {}
       updatedAt:
         type: string
     type: object
   handlers.Task:
     properties:
-      created_at:
+      createdAt:
         type: string
       id:
         type: string
@@ -32,7 +31,27 @@ definitions:
         type: string
       title:
         type: string
-      updated_at:
+      updatedAt:
+        type: string
+    type: object
+  handlers.TaskWithProject:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      project:
+        $ref: '#/definitions/handlers.Project'
+      status:
+        enum:
+        - processing
+        - error
+        - completed
+        - waiting
+        type: string
+      title:
+        type: string
+      updatedAt:
         type: string
     type: object
 host: localhost:3000
@@ -57,7 +76,7 @@ paths:
       summary: Checks if the server is ready
       tags:
       - health
-  /projects:
+  /projects/all:
     get:
       consumes:
       - application/json
@@ -97,6 +116,28 @@ paths:
           schema:
             type: string
       summary: Get list of tasks
+      tags:
+      - tasks
+  /tasks/projects:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all tasks along with their associated projects from the
+        database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.TaskWithProject'
+            type: array
+        "400":
+          description: 'Couldn''t get tasks: [error message]'
+          schema:
+            type: string
+      summary: Get list of tasks with projects
       tags:
       - tasks
   /upload:

@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/sieugene/jp-reader/utils"
 )
 
@@ -19,14 +17,6 @@ import (
 // @Property Name string `json:"name"` // The name of the project.
 // @Property Images array[string] `json:"images"` // A list of images associated with the project.
 // @Property OcrData object `json:"ocrData"` // OCR data associated with the project.
-type Project struct {
-	ID        uuid.UUID   `json:"ID"`
-	CreatedAt time.Time   `json:"createdAt"`
-	UpdatedAt time.Time   `json:"updatedAt"`
-	Name      string      `json:"Name"`
-	Images    []string    `json:"Images"`
-	OcrData   interface{} `json:"OcrData"`
-}
 
 // HandlerGetProjects returns a list of projects
 // @Summary Get list of projects
@@ -36,12 +26,12 @@ type Project struct {
 // @Produce json
 // @Success 200 {array} Project
 // @Failure 400 {string} string "Couldn't get projects: [error message]"
-// @Router /projects [get]
+// @Router /projects/all [get]
 func (apiCfg *ApiConfig) HandlerGetProjects(w http.ResponseWriter, r *http.Request) {
 	projects, err := apiCfg.DB.GetProjects(context.Background())
 	if err != nil {
 		utils.RespondWithError(w, 400, fmt.Sprintf("Couldn't get projects:%v", err))
 		return
 	}
-	utils.RespondWithJSON(w, 201, projects)
+	utils.RespondWithJSON(w, 201, databaseProjectsToProjects(projects))
 }

@@ -20,16 +20,16 @@ export const useProjects = () => {
   useEffect(() => {
     (async () => {
       const response =
-        (await api.projects.projectsList()) as unknown as ProjectResponse;
+        (await api.projects.getProjects()) as unknown as ProjectResponse;
       const readerData = response.data.map((data) => {
         const projectData =
-          data.Images?.map((image) => {
+          data.images?.map((image) => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [_, fileName] = image.split(`/projects/${data.Name}/images/`);
+            const [_, fileName] = image.split(`/projects/${data.name}/images/`);
             const [order] = fileName.split("_");
             const fileNameWithoutExt = fileName?.split(".")?.[0];
             const ocrData = (
-              data.OcrData as { data: OcrData; name: string }[]
+              data.ocrData as { data: OcrData; name: string }[]
             ).find((d) => d.name.includes(fileNameWithoutExt))?.data as OcrData;
 
             const formattedData: FormattedProject["data"][0] = {
@@ -40,8 +40,8 @@ export const useProjects = () => {
             return formattedData;
           }) || [];
         const project: FormattedProject = {
-          id: data.ID || "00-00",
-          name: data.Name || "-",
+          id: data.id || "00-00",
+          name: data.name || "-",
           data: projectData,
         };
         return project;

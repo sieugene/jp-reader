@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,6 +65,60 @@ func (q *Queries) GetTasks(ctx context.Context) ([]Task, error) {
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTasksWithProjects = `-- name: GetTasksWithProjects :many
+SELECT
+    tasks.id, tasks.title, tasks.status, tasks.created_at, tasks.updated_at,
+    json_build_object(
+        'id', projects.id,
+        'created_at', projects.created_at,
+        'update_at', projects.update_at,
+        'name', projects.name,
+        'images', projects.images,
+        'ocr_data', projects.ocr_data
+    ) AS project
+FROM tasks
+INNER JOIN projects ON projects.name = tasks.title
+`
+
+type GetTasksWithProjectsRow struct {
+	ID        uuid.UUID
+	Title     string
+	Status    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Project   json.RawMessage
+}
+
+func (q *Queries) GetTasksWithProjects(ctx context.Context) ([]GetTasksWithProjectsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTasksWithProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTasksWithProjectsRow
+	for rows.Next() {
+		var i GetTasksWithProjectsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Project,
 		); err != nil {
 			return nil, err
 		}

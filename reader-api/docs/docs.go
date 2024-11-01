@@ -38,7 +38,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/projects": {
+        "/projects/all": {
             "get": {
                 "description": "Retrieves all projects from the database",
                 "consumes": [
@@ -90,6 +90,38 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/handlers.Task"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Couldn't get tasks: [error message]",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/tasks/projects": {
+            "get": {
+                "description": "Retrieves all tasks along with their associated projects from the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get list of tasks with projects",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.TaskWithProject"
                             }
                         }
                     },
@@ -156,25 +188,24 @@ const docTemplate = `{
     },
     "definitions": {
         "handlers.Project": {
-            "description": "Represents a project with its details.",
             "type": "object",
             "properties": {
-                "ID": {
+                "createdAt": {
                     "type": "string"
                 },
-                "Images": {
+                "id": {
+                    "type": "string"
+                },
+                "images": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "Name": {
+                "name": {
                     "type": "string"
                 },
-                "OcrData": {},
-                "createdAt": {
-                    "type": "string"
-                },
+                "ocrData": {},
                 "updatedAt": {
                     "type": "string"
                 }
@@ -183,7 +214,7 @@ const docTemplate = `{
         "handlers.Task": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "id": {
@@ -201,7 +232,36 @@ const docTemplate = `{
                 "title": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.TaskWithProject": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "project": {
+                    "$ref": "#/definitions/handlers.Project"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "processing",
+                        "error",
+                        "completed",
+                        "waiting"
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
                     "type": "string"
                 }
             }

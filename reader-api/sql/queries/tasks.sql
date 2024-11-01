@@ -6,6 +6,20 @@ RETURNING *;
 -- name: GetTasks :many
 SELECT * FROM tasks;
 
+-- name: GetTasksWithProjects :many
+SELECT
+    tasks.*,
+    json_build_object(
+        'id', projects.id,
+        'created_at', projects.created_at,
+        'update_at', projects.update_at,
+        'name', projects.name,
+        'images', projects.images,
+        'ocr_data', projects.ocr_data
+    ) AS project
+FROM tasks
+INNER JOIN projects ON projects.name = tasks.title;
+
 -- name: UpdateTaskStatus :exec
 UPDATE tasks
 SET status = $1, updated_at = $2
