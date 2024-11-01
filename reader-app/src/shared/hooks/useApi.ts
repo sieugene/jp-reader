@@ -1,8 +1,10 @@
 import { useRef } from "react";
-import { Api } from "../api/Api";
+import { Api } from "../../api/Api";
+import { CONFIG } from '../config';
+
 
 const JP_READER_API = new Api({
-  baseUrl: "http://localhost:3000/v1",
+  baseUrl: CONFIG.READER_API,
 });
 
 export const useApi = () => {

@@ -76,17 +76,29 @@ func databaseTaskAndProjectToTaskAndProject(dbTaskWithProject database.GetTasksW
 		CreatedAt: dbTaskWithProject.CreatedAt,
 		UpdatedAt: dbTaskWithProject.UpdatedAt,
 	})
-	var dbProject database.Project
+	var dbProject struct {
+		database.Project
+		// TODO ocr_data || OcrData ???
+		OcrData interface{} `json:"ocr_data"`
+	}
 	err := json.Unmarshal(dbTaskWithProject.Project, &dbProject)
 	if err != nil {
 		return TaskWithProject{}, fmt.Errorf("failed to unmarshal project data: %w", err)
 	}
 
-	project := databaseProjectToProject(dbProject)
+	// TODO without `json:"ocr_data"` filled like nil
+	// project := databaseProjectToProject(dbProject)
 
 	return TaskWithProject{
-		Task:    task,
-		Project: project,
+		Task: task,
+		Project: Project{
+			ID:        dbProject.ID,
+			CreatedAt: dbProject.CreatedAt,
+			UpdatedAt: dbProject.UpdateAt,
+			Name:      dbProject.Name,
+			Images:    dbProject.Images,
+			OcrData:   dbProject.OcrData,
+		},
 	}, nil
 }
 

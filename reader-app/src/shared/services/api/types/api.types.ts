@@ -1,9 +1,15 @@
-import { HandlersProject } from "@/api/Api";
+import { HandlersProject, HandlersTaskWithProject } from "@/api/Api";
 
 export type ProjectResponse = {
   data: (Omit<HandlersProject, "ocrData"> & {
     ocrData: { data: OcrData; name: string }[];
   })[];
+};
+
+export type TaskWithProjectResponse = {
+  data: Omit<HandlersTaskWithProject, "project"> & {
+    project: ProjectResponse["data"][0];
+  };
 };
 
 export interface OcrData {

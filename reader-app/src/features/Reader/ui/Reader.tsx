@@ -1,10 +1,11 @@
-import { FormattedProject } from "@/hooks/useProjects";
+
+import { TransformedProject } from '@/shared/services/api';
 import { FC } from "react";
 
 type Props = {
   scaleX?: number;
   scaleY?: number;
-} & FormattedProject["data"][0];
+} & TransformedProject["data"][0];
 
 export const Reader: FC<Props> = ({
   scaleX = 1,

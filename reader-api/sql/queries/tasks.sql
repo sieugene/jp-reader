@@ -18,7 +18,7 @@ SELECT
         'ocr_data', projects.ocr_data
     ) AS project
 FROM tasks
-INNER JOIN projects ON projects.name = tasks.title;
+LEFT JOIN projects ON projects.name = tasks.title;
 
 -- name: UpdateTaskStatus :exec
 UPDATE tasks
