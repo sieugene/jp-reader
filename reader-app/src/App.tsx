@@ -4,6 +4,7 @@ import { TasksProjects } from "./features/TasksProjects";
 import BaseLayout from "./layouts/BaseLayout";
 import { useState } from "react";
 import { TaskProject } from "./entities/TaskProject/ui";
+import { CreateTask } from "./features/CreateTask/ui";
 
 function App() {
   useHealthz();
@@ -13,6 +14,7 @@ function App() {
     <SWRConfig value={{ provider: () => new Map() }}>
       <BaseLayout>
         <div className="projects p-6 max-w-4xl mx-auto">
+          <CreateTask />
           <TasksProjects
             selected={selected}
             onSelect={(id) => setSelected(id || "")}
