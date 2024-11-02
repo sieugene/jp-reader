@@ -47,6 +47,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
+
 	db := database.New(pool)
 	apiCfq := handlers.ApiConfig{
 		DB: db,

@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+  mokuro-app:
+    build:
+      context: ./mokuro-server
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./projects/uploads:/app/uploads
+    networks:
+      - mokuro-network
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - .env
+    networks:
+      - reader-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    env_file:
+      - .env
+    networks:
+      - reader-network
+
+  reader-api:
+    build:
+      context: ./reader-api
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - rabbitmq
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    env_file:
+      - .env
+    # command: >
+    #   sh -c "cd /app/sql/schema && goose postgres postgres://user:password@postgres:5432/jpreader up"
+    networks:
+      - reader-network
+      - mokuro-network
+
+networks:
+  mokuro-network:
+  reader-network:
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
