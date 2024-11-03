@@ -52,11 +52,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=${POSTGRES_SCHEME}://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     env_file:
       - .env
-    # command: >
-    #   sh -c "cd /app/sql/schema && goose postgres postgres://user:password@postgres:5432/jpreader up"
     networks:
       - reader-network
       - mokuro-network

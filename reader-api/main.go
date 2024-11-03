@@ -10,8 +10,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -34,6 +36,20 @@ type RabbitTask struct {
 	FileData []byte    `json:"file_data"`
 }
 
+func waitForService(host string, port string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", host, port))
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		log.Printf("Waiting for %s:%s to be available...", host, port)
+		time.Sleep(2 * time.Second)
+	}
+	return fmt.Errorf("service %s:%s not available after %s", host, port, timeout)
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -41,6 +57,11 @@ func main() {
 	}
 	portString := os.Getenv("PORT")
 	dbUrl := os.Getenv("DB_URL")
+	rabbitHost := os.Getenv("RABBITMQ_HOST")
+	rabbitPort := os.Getenv("RABBITMQ_PORT")
+	if err := waitForService(rabbitHost, rabbitPort, 30*time.Second); err != nil {
+		log.Fatalf("Failed to wait for RabbitMQ: %v", err)
+	}
 
 	pool, err := sql.Open("postgres", dbUrl)
 	if err != nil {
@@ -56,8 +77,8 @@ func main() {
 	rabbitConfig := rabbitmq.RabbitMQConfig{
 		User:     os.Getenv("RABBITMQ_USER"),
 		Password: os.Getenv("RABBITMQ_PASSWORD"),
-		Host:     os.Getenv("RABBITMQ_HOST"),
-		Port:     os.Getenv("RABBITMQ_PORT"),
+		Host:     rabbitHost,
+		Port:     rabbitPort,
 	}
 
 	r := chi.NewRouter()

@@ -19,4 +19,5 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/.env .
 COPY --from=builder /app/sql/schema /app/sql/schema
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
-CMD ["./main"]
+
+ENTRYPOINT sh -c "goose -dir /app/sql/schema postgres ${DATABASE_URL} up && ./main"
