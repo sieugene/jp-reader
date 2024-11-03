@@ -14,7 +14,7 @@ $ pip install -r requirements.txt
 python app.py
 ```
 
-## Docker compose
+## Alternatively, you can start it using Docker compose
 ```bash
 docker-compose up -d
 ```

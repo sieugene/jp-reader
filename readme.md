@@ -1,13 +1,17 @@
 # jp-reader
 
-jp-reader is a monorepository that includes a Go and Flask backend for image processing using Mokuro. The project is structured to enable efficient interaction between microservices and optimal handling of uploaded data.
+jp-reader is a monorepository that includes backends in Go and Flask for processing images using Mokuro. It also provides an interface for uploading manga, viewing processing statuses, and accessing a reader.
+
+The project is designed to aid in learning the Japanese language, facilitate manga reading, and reduce the need to work with the terminal for image processing through Mokuro. Instead, users can interactively upload manga and have free access to reading on their local devices.
+
+Recommend - using Yomichan/Yomitan for more effective reading.
 
 ## Key Features
 
-1. **Image Uploading**: The application allows users to upload images, which are then processed using Mokuro.
+1. **Manga Uploading**: The application allows users to upload manga images, which are processed using the Mokuro library for efficient text recognition.
 2. **Image Processing**: Mokuro is used for text recognition and image conversion to facilitate further content handling.
 3. **Message Queues**: RabbitMQ provides asynchronous data processing, organizing task queues for managing file uploads and processing.
-4. **Processing Status Tracking**: The system tracks the status of uploaded images, allowing users to see the processing progress.
+4. **Processing Status Tracking**: Users can view the status of their uploaded manga, providing insights into the processing progress and enabling a seamless reading experience.
 
 ## Tech Stack
 
@@ -22,46 +26,73 @@ jp-reader is a monorepository that includes a Go and Flask backend for image pro
 1. **Monorepository**: Includes directories for each microservice and shared code.
 2. **Microservices**: The Go backend handles file uploading and interaction with RabbitMQ, while the Flask subsystem performs processing with Mokuro.
 3. **Asynchronous Processing**: RabbitMQ distributes tasks between services.
-4. **Processing Status Tracking**: The system updates database records to show the current processing status of each file.
+4. **Processing Status Tracking**: The system updates database records to show the current processing status of each uploaded manga.
+5. **User Interface**: The React-based frontend offers an intuitive interface for users to upload manga images easily, view processing statuses of uploaded files, access a reader for seamless manga viewing, Interact with features that enhance the reading experience.
 
 ## Installation and Setup
+
+### For local use
+
+If you want to use the jp-reader service locally without diving into development, follow these steps:
 
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/your-username/your-repo.git
-   ```
+   cd your-repo
+    ```
 
-2. **For the Mokuro server**:
-   - Navigate to the `./mokuro-server` folder.
-   - Install the requirements:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - Run the server:
-     ```bash
-     python app.py
-     ```
-   - Alternatively, you can start it using Docker:
-     ```bash
-     docker-compose up
-     ```
+2. **Run the entire application with Docker**:
 
-3. **For the Reader API**:
-   - Navigate to the `./reader-api` folder.
-   - Start the Reader API using Docker:
+    In the root directory, run:
+    ```bash
+    docker-compose up
+    ```
+    This will start all necessary services, including the Mokuro server, Reader API, PostgreSQL, and RabbitMQ.
+
+3. **Run reader app**
+
+    Navigate to the reader-app folder
+    ```bash
+    cd ./reader-app
+    ```
+
+    Install dependencies
+    
      ```bash
-     docker-compose up
+        pnpm install
      ```
-   - Or run it directly:
-     ```bash
-     go run main.go
-     ```
+    Build
 
-4. **Upload an image**:
-   - Send a request to `http://localhost:3000/v1/upload` with form-data containing `[file, title]`.
+    ```bash
+        pnpm build
+    ``` 
+    For Access the Reader App
+    ```bash
+        pnpm preview
+    ``` 
+    Navigate to http://localhost:4173/ in your web browser to use the application.
+    
+    From there, you can upload images, view the processing results and use reader.  
 
-5. **View current processed projects**:
-   - Open [http://127.0.0.1:5001/projects](http://127.0.0.1:5001/projects) to see the current processed projects.
-   - Open [http://127.0.0.1:5001/projects/[name]](http://127.0.0.1:5001/projects/[name]) to view the static results from Mokuro.
 
-**Note**: The project is still under development.
+### For Developers: Running and Modifying Each Service
+For detailed instructions on running and modifying each service, please refer to the respective README files in each service directory:
+
+Mokuro Server: [mokuro-server/README.md](https://github.com/sieugene/jp-reader/blob/master/mokuro-server/Readme.md)
+
+Reader API: [reader-api/README.md](https://github.com/sieugene/jp-reader/blob/master/reader-api/readme.md)
+
+Reader App: [reader-app/README.md](https://github.com/sieugene/jp-reader/blob/master/reader-app/README.md)
+
+Note: The project is still under development. Please report any issues you encounter.
+
+### Contributing
+If you would like to contribute to the project, please follow these steps:
+
+Fork the repository.
+
+Create a new branch for your feature or bugfix.
+
+Make your changes and commit them.
+
+Push your branch and open a pull request.
